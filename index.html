@@ -84,14 +84,16 @@
   .msg.error{color:var(--vermillion);}
   .msg.ok{color:#2b7a3d;}
   .opened-item{
-    display:flex;justify-content:space-between;align-items:center;
     padding:10px;border:1px solid #ddd;border-radius:8px;margin-bottom:8px;
     background:#fff;
   }
-  .opened-item .name{font-size:13px;word-break:break-all;}
-  .opened-item button{
+  .opened-item .head{
+    display:flex;justify-content:space-between;align-items:center;gap:8px;
+  }
+  .opened-item .name{font-size:13px;word-break:break-all;flex:1;}
+  .opened-item .head button{
     border:1px solid var(--indigo);color:var(--indigo);background:#fff;
-    border-radius:6px;padding:6px 10px;font-size:12px;
+    border-radius:6px;padding:6px 10px;font-size:12px;white-space:nowrap;flex-shrink:0;
   }
   .preview{margin-top:10px;text-align:center;}
   .preview img{max-width:100%;border-radius:6px;}
@@ -394,11 +396,17 @@ function renderOpened(files){
   files.forEach(f=>{
     const item = document.createElement('div');
     item.className = 'opened-item';
-    item.innerHTML = `<span class="name">${escapeHtml(f.name)}（${formatSize(f.size)}）</span>`;
+    const head = document.createElement('div');
+    head.className = 'head';
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'name';
+    nameSpan.textContent = `${f.name}（${formatSize(f.size)}）`;
     const btn = document.createElement('button');
     btn.textContent = '表示/保存';
     btn.onclick = ()=> showFile(f, item);
-    item.appendChild(btn);
+    head.appendChild(nameSpan);
+    head.appendChild(btn);
+    item.appendChild(head);
     wrap.appendChild(item);
   });
 }
@@ -414,36 +422,44 @@ function showFile(f, container){
   preview = document.createElement('div');
   preview.className = 'preview';
 
+  let previewable = true;
   if(f.type.startsWith('image/')){
     preview.innerHTML = `<img src="${url}">`;
   }else if(f.type.startsWith('video/')){
     preview.innerHTML = `<video src="${url}" controls playsinline style="max-width:100%;border-radius:6px;"></video>`;
-  }else if(f.type==='text/plain'){
+  }else if(f.type.startsWith('audio/')){
+    preview.innerHTML = `<audio src="${url}" controls style="width:100%;"></audio>`;
+  }else if(f.type==='text/plain' || f.type==='text/csv'){
     const text = new TextDecoder().decode(buf);
     preview.innerHTML = `<pre style="white-space:pre-wrap;text-align:left;font-size:12px;">${escapeHtml(text.slice(0,3000))}</pre>`;
+  }else if(f.type==='application/pdf'){
+    preview.innerHTML = `<embed src="${url}" type="application/pdf" style="width:100%;height:60vh;border:1px solid #ddd;border-radius:6px;">`;
   }else{
-    preview.innerHTML = '';
+    previewable = false;
+    preview.innerHTML = `<div style="font-size:12px;color:#888;text-align:left;padding:4px 0;">この形式（${escapeHtml(f.name.split('.').pop() || '不明')}）はアプリ内で表示できません。下のボタンから共有シートを開き、対応アプリで開くか保存してください。</div>`;
   }
 
+  const canShareFile = navigator.canShare && navigator.canShare({files:[file]});
   const isStandalone = window.navigator.standalone === true
     || window.matchMedia('(display-mode: standalone)').matches;
-  const canShareFile = navigator.canShare && navigator.canShare({files:[file]});
 
-  if(canShareFile && isStandalone){
-    // standaloneでは共有シート経由で保存
+  // 共有シートが使えるなら常に共有ボタン（対応アプリで開く・保存の両方をまかなえる）
+  if(canShareFile){
     const btn = document.createElement('button');
-    btn.textContent = 'このファイルを保存/共有';
+    btn.textContent = previewable ? 'このファイルを保存 / 共有' : '共有シートで開く / 保存';
     btn.className = 'btn secondary';
     btn.style.marginTop='8px';
     btn.onclick = async ()=>{
       try{ await navigator.share({files:[file], title:f.name}); }catch(e){}
     };
     preview.appendChild(btn);
-  }else{
+  }
+  // ブラウザ（非standalone）ではダウンロードリンクも併設
+  if(!isStandalone){
     const a = document.createElement('a');
     a.href = url;
     a.download = f.name;
-    a.textContent = 'このファイルを保存';
+    a.textContent = 'ダウンロード保存';
     a.className = 'btn secondary';
     a.style.marginTop='8px';
     preview.appendChild(a);
