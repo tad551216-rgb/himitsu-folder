@@ -4,7 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>秘密フォルダ - つくる手帖</title>
-<link rel="manifest" href="data:application/json,{}">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2c5077">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="秘密フォルダ">
+<link rel="apple-touch-icon" href="icon-180.png">
 <style>
   :root{
     --paper:#f7f3ea;
@@ -289,25 +294,37 @@ $('buildBtn').onclick = async ()=>{
     // 共有用に File として保持
     builtFile = new File([out], name + '.himitsu', {type:'application/octet-stream'});
 
-    const url = URL.createObjectURL(builtFile);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = name + '.himitsu';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(()=>URL.revokeObjectURL(url), 5000);
-
-    // 共有ボタンを表示（Web Share API対応時のみ）
+    const isStandalone = window.navigator.standalone === true
+      || window.matchMedia('(display-mode: standalone)').matches;
     const canShareFile = navigator.canShare && navigator.canShare({files:[builtFile]});
+
     if(canShareFile){
       $('shareBtn').classList.remove('hidden');
     }
 
+    // standaloneモードではa[download]が動作しないことがあるため、
+    // 共有シート経由（「ファイルに保存」を含む）を主経路とする
+    if(!isStandalone){
+      const url = URL.createObjectURL(builtFile);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = name + '.himitsu';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(()=>URL.revokeObjectURL(url), 5000);
+    }
+
     msg.className='msg ok';
-    msg.textContent = canShareFile
-      ? `作成完了：${name}.himitsu を保存しました。下の緑のボタンからLINEなどに直接送れます。`
-      : `作成完了：${name}.himitsu を保存しました。「ファイル」アプリからLINEに添付するか、外部ストレージに移動してください。（この環境では直接共有に非対応です。Safariで開くと緑の共有ボタンが使えます）`;
+    if(isStandalone && canShareFile){
+      msg.textContent = `作成完了。下の緑のボタンから共有シートを開き、LINEに送るか「"ファイル"に保存」で外部ストレージに保存してください。`;
+    }else if(canShareFile){
+      msg.textContent = `作成完了：${name}.himitsu を保存しました。下の緑のボタンからLINEなどに直接送れます。`;
+    }else if(isStandalone){
+      msg.textContent = `作成完了しましたが、この環境では保存・共有の手段がありません。Safariで開き直してお試しください。`;
+    }else{
+      msg.textContent = `作成完了：${name}.himitsu を保存しました。「ファイル」アプリからLINEに添付するか、外部ストレージに移動してください。（この環境では直接共有に非対応です。Safariで開くと緑の共有ボタンが使えます）`;
+    }
   }catch(err){
     msg.className='msg error';
     msg.textContent = '作成に失敗しました：'+err.message;
@@ -373,14 +390,16 @@ function showFile(f, container){
   if(preview){ preview.remove(); return; }
 
   const buf = base64ToArrayBuffer(f.data);
-  const blob = new Blob([buf], {type:f.type});
-  const url = URL.createObjectURL(blob);
+  const file = new File([buf], f.name, {type:f.type});
+  const url = URL.createObjectURL(file);
 
   preview = document.createElement('div');
   preview.className = 'preview';
 
   if(f.type.startsWith('image/')){
     preview.innerHTML = `<img src="${url}">`;
+  }else if(f.type.startsWith('video/')){
+    preview.innerHTML = `<video src="${url}" controls playsinline style="max-width:100%;border-radius:6px;"></video>`;
   }else if(f.type==='text/plain'){
     const text = new TextDecoder().decode(buf);
     preview.innerHTML = `<pre style="white-space:pre-wrap;text-align:left;font-size:12px;">${escapeHtml(text.slice(0,3000))}</pre>`;
@@ -388,15 +407,40 @@ function showFile(f, container){
     preview.innerHTML = '';
   }
 
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = f.name;
-  a.textContent = 'このファイルを保存';
-  a.className = 'btn secondary';
-  a.style.marginTop='8px';
-  preview.appendChild(a);
+  const isStandalone = window.navigator.standalone === true
+    || window.matchMedia('(display-mode: standalone)').matches;
+  const canShareFile = navigator.canShare && navigator.canShare({files:[file]});
+
+  if(canShareFile && isStandalone){
+    // standaloneでは共有シート経由で保存
+    const btn = document.createElement('button');
+    btn.textContent = 'このファイルを保存/共有';
+    btn.className = 'btn secondary';
+    btn.style.marginTop='8px';
+    btn.onclick = async ()=>{
+      try{ await navigator.share({files:[file], title:f.name}); }catch(e){}
+    };
+    preview.appendChild(btn);
+  }else{
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = f.name;
+    a.textContent = 'このファイルを保存';
+    a.className = 'btn secondary';
+    a.style.marginTop='8px';
+    preview.appendChild(a);
+  }
 
   container.appendChild(preview);
+}
+
+// --- Service Worker 登録（PWA・オフライン対応）---
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{
+      // file:// やプレビュー環境では失敗するが動作には影響なし
+    });
+  });
 }
 </script>
 </body>
