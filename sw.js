@@ -1,4 +1,4 @@
-const CACHE_NAME = 'himitsu-folder-v1';
+const CACHE_NAME = 'himitsu-folder-v2';
 const ASSETS = [
   './',
   './index.html',

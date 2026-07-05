@@ -73,6 +73,13 @@
   .btn.secondary{background:var(--indigo);}
   .btn.share{background:#06c755;} /* LINEグリーン */
   .btn.share:disabled{background:#ccc;}
+  .guide{
+    margin-top:14px;padding:12px;border:1px solid var(--indigo);
+    border-radius:8px;background:#fcfaf4;font-size:13px;line-height:1.7;
+  }
+  .guide b{color:var(--indigo);}
+  .guide ol{margin:6px 0 0;padding-left:20px;}
+  .guide li{margin-bottom:4px;}
   .msg{margin-top:10px;font-size:13px;text-align:center;}
   .msg.error{color:var(--vermillion);}
   .msg.ok{color:#2b7a3d;}
@@ -119,8 +126,17 @@
       <div class="filelist" id="createFileList"></div>
 
       <button class="btn" id="buildBtn">暗号化してファイルを作成</button>
-      <button class="btn share hidden" id="shareBtn">LINEなどで送る（共有）</button>
+      <button class="btn secondary hidden" id="shareBtn">"ファイル"に保存 / 共有</button>
       <div class="msg" id="createMsg"></div>
+      <div class="guide hidden" id="lineGuide">
+        <b>LINEで送るには</b>
+        <ol>
+          <li>上のボタンで「<b>"ファイル"に保存</b>」を選んで保存</li>
+          <li><b>LINE</b>を開き、トーク画面の「<b>＋</b>」→「<b>ファイル</b>」をタップ</li>
+          <li>保存した <b>.himitsu</b> ファイルを選んで送信</li>
+        </ol>
+        <div class="small">※ 共有シートからLINEを直接選ぶと形式の関係で送れないことがあります。上の手順が確実です。パスワードはLINEとは別の方法（口頭・電話など）で伝えてください。</div>
+      </div>
       <div class="small">作成後、共有シートから「ファイル」アプリを選んで外部ストレージ（USBメモリなど）に保存してください。</div>
     </div>
   </div>
@@ -261,6 +277,7 @@ $('buildBtn').onclick = async ()=>{
   const msg = $('createMsg');
   msg.className = 'msg'; msg.textContent='';
   $('shareBtn').classList.add('hidden');
+  $('lineGuide').classList.add('hidden');
   builtFile = null;
   const name = $('folderName').value.trim();
   const pass = $('folderPass').value;
@@ -317,14 +334,15 @@ $('buildBtn').onclick = async ()=>{
 
     msg.className='msg ok';
     if(isStandalone && canShareFile){
-      msg.textContent = `作成完了。下の緑のボタンから共有シートを開き、LINEに送るか「"ファイル"に保存」で外部ストレージに保存してください。`;
+      msg.textContent = `作成完了。下のボタンから「"ファイル"に保存」を選んで保存してください。`;
     }else if(canShareFile){
-      msg.textContent = `作成完了：${name}.himitsu を保存しました。下の緑のボタンからLINEなどに直接送れます。`;
+      msg.textContent = `作成完了：${name}.himitsu を保存しました。下のボタンからも保存先を選べます。`;
     }else if(isStandalone){
       msg.textContent = `作成完了しましたが、この環境では保存・共有の手段がありません。Safariで開き直してお試しください。`;
     }else{
-      msg.textContent = `作成完了：${name}.himitsu を保存しました。「ファイル」アプリからLINEに添付するか、外部ストレージに移動してください。（この環境では直接共有に非対応です。Safariで開くと緑の共有ボタンが使えます）`;
+      msg.textContent = `作成完了：${name}.himitsu をダウンロードに保存しました。`;
     }
+    $('lineGuide').classList.remove('hidden');
   }catch(err){
     msg.className='msg error';
     msg.textContent = '作成に失敗しました：'+err.message;
