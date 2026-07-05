@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>秘密フォルダ - つくる手帖</title>
+<link rel="manifest" href="data:application/json,{}">
+<style>
+  :root{
+    --paper:#f7f3ea;
+    --grid:#e4ddc9;
+    --indigo:#2c5077;
+    --vermillion:#c9472e;
+    --ink:#333333;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{
+    margin:0;padding:0;height:100%;
+    background-color:var(--paper);
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size:24px 24px;
+    font-family:-apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+    color:var(--ink);
+  }
+  header{
+    padding:18px 16px 10px;
+    text-align:center;
+    border-bottom:2px solid var(--indigo);
+    background:rgba(247,243,234,0.9);
+  }
+  header h1{
+    margin:0;font-size:20px;color:var(--indigo);letter-spacing:0.05em;
+  }
+  header p{margin:4px 0 0;font-size:12px;color:#777;}
+  main{max-width:480px;margin:0 auto;padding:16px;}
+  .tabs{display:flex;gap:8px;margin-bottom:16px;}
+  .tab{
+    flex:1;padding:10px;text-align:center;border:2px solid var(--indigo);
+    border-radius:8px;color:var(--indigo);font-size:14px;font-weight:bold;
+    background:#fff;cursor:pointer;
+  }
+  .tab.active{background:var(--indigo);color:#fff;}
+  .card{
+    background:#fffdf8;border:2px solid var(--indigo);border-radius:10px;
+    padding:16px;margin-bottom:16px;
+  }
+  .card h2{margin:0 0 12px;font-size:15px;color:var(--indigo);}
+  label{display:block;font-size:13px;color:#555;margin:10px 0 4px;}
+  input[type=text], input[type=password]{
+    width:100%;padding:10px;border:1px solid #ccc;border-radius:6px;
+    font-size:15px;background:#fff;
+  }
+  .filepick{
+    display:block;width:100%;padding:12px;text-align:center;
+    border:2px dashed #aaa;border-radius:8px;font-size:13px;color:#666;
+    margin-top:8px;background:#fcfaf4;cursor:pointer;
+  }
+  .filelist{margin-top:10px;font-size:13px;}
+  .filelist div{padding:6px 8px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;}
+  .btn{
+    display:block;width:100%;padding:13px;margin-top:14px;border:none;
+    border-radius:8px;font-size:15px;font-weight:bold;color:#fff;
+    background:var(--vermillion);cursor:pointer;
+  }
+  .btn:disabled{background:#ccc;}
+  .btn.secondary{background:var(--indigo);}
+  .btn.share{background:#06c755;} /* LINEグリーン */
+  .btn.share:disabled{background:#ccc;}
+  .msg{margin-top:10px;font-size:13px;text-align:center;}
+  .msg.error{color:var(--vermillion);}
+  .msg.ok{color:#2b7a3d;}
+  .opened-item{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:10px;border:1px solid #ddd;border-radius:8px;margin-bottom:8px;
+    background:#fff;
+  }
+  .opened-item .name{font-size:13px;word-break:break-all;}
+  .opened-item button{
+    border:1px solid var(--indigo);color:var(--indigo);background:#fff;
+    border-radius:6px;padding:6px 10px;font-size:12px;
+  }
+  .preview{margin-top:10px;text-align:center;}
+  .preview img{max-width:100%;border-radius:6px;}
+  .small{font-size:11px;color:#888;margin-top:6px;}
+  .hidden{display:none;}
+</style>
+</head>
+<body>
+<header>
+  <h1>秘密フォルダ</h1>
+  <p>作成・保管・閲覧まで、すべて端末内で完結します</p>
+</header>
+<main>
+  <div class="tabs">
+    <div class="tab active" id="tabCreate">作成</div>
+    <div class="tab" id="tabOpen">開く</div>
+  </div>
+
+  <!-- 作成タブ -->
+  <div id="paneCreate">
+    <div class="card">
+      <h2>新しい秘密フォルダを作成</h2>
+      <label>フォルダ名</label>
+      <input type="text" id="folderName" placeholder="例：家族写真">
+      <label>パスワード</label>
+      <input type="password" id="folderPass" placeholder="6文字以上を推奨">
+      <label>パスワード（確認）</label>
+      <input type="password" id="folderPass2" placeholder="もう一度入力">
+
+      <label>格納するファイル（何度でも追加できます）</label>
+      <input type="file" id="filesInput" multiple class="filepick">
+      <div class="filelist" id="createFileList"></div>
+
+      <button class="btn" id="buildBtn">暗号化してファイルを作成</button>
+      <button class="btn share hidden" id="shareBtn">LINEなどで送る（共有）</button>
+      <div class="msg" id="createMsg"></div>
+      <div class="small">作成後、共有シートから「ファイル」アプリを選んで外部ストレージ（USBメモリなど）に保存してください。</div>
+    </div>
+  </div>
+
+  <!-- 開くタブ -->
+  <div id="paneOpen" class="hidden">
+    <div class="card">
+      <h2>秘密フォルダを開く</h2>
+      <label>.himitsu ファイルを選択</label>
+      <input type="file" id="openFilePicker" accept=".himitsu" class="filepick">
+      <label>パスワード</label>
+      <input type="password" id="openPass" placeholder="パスワードを入力">
+      <button class="btn secondary" id="openBtn">復号して開く</button>
+      <div class="msg" id="openMsg"></div>
+    </div>
+
+    <div id="openedResult"></div>
+  </div>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+
+// --- タブ切り替え ---
+$('tabCreate').onclick = () => switchTab('create');
+$('tabOpen').onclick = () => switchTab('open');
+function switchTab(which){
+  $('tabCreate').classList.toggle('active', which==='create');
+  $('tabOpen').classList.toggle('active', which==='open');
+  $('paneCreate').classList.toggle('hidden', which!=='create');
+  $('paneOpen').classList.toggle('hidden', which!=='open');
+}
+
+// --- ファイル選択 → base64化して保持 ---
+let pendingFiles = []; // {name, type, size, data(base64)}
+let builtFile = null;  // 作成済みの .himitsu File（共有用）
+
+$('shareBtn').onclick = async ()=>{
+  if(!builtFile) return;
+  try{
+    await navigator.share({
+      files:[builtFile],
+      title:builtFile.name
+    });
+  }catch(err){
+    // ユーザーがキャンセルした場合も例外になるため、無視
+  }
+};
+
+$('filesInput').addEventListener('change', async (e)=>{
+  const files = Array.from(e.target.files);
+  if(files.length===0) return;
+  const list = $('createFileList');
+  list.innerHTML = '読み込み中…';
+  for(const f of files){
+    const buf = await f.arrayBuffer();
+    const b64 = arrayBufferToBase64(buf);
+    // 同名ファイルは新しい方で上書き
+    const idx = pendingFiles.findIndex(p=>p.name===f.name);
+    const item = {name:f.name, type:f.type||'application/octet-stream', size:f.size, data:b64};
+    if(idx>=0) pendingFiles[idx] = item;
+    else pendingFiles.push(item);
+  }
+  e.target.value = ''; // 同じファイルを再選択してもchangeが発火するように
+  renderFileList();
+});
+
+function renderFileList(){
+  const list = $('createFileList');
+  if(pendingFiles.length===0){
+    list.innerHTML = '（未選択）';
+    return;
+  }
+  list.innerHTML = '';
+  let total = 0;
+  pendingFiles.forEach((f, i)=>{
+    total += f.size;
+    const row = document.createElement('div');
+    const nameSpan = document.createElement('span');
+    nameSpan.textContent = f.name;
+    const right = document.createElement('span');
+    right.textContent = formatSize(f.size) + ' ';
+    const del = document.createElement('button');
+    del.textContent = '削除';
+    del.style.cssText = 'border:1px solid var(--vermillion);color:var(--vermillion);background:#fff;border-radius:5px;padding:2px 8px;font-size:11px;margin-left:6px;';
+    del.onclick = ()=>{ pendingFiles.splice(i,1); renderFileList(); };
+    right.appendChild(del);
+    row.appendChild(nameSpan);
+    row.appendChild(right);
+    list.appendChild(row);
+  });
+  const totalRow = document.createElement('div');
+  totalRow.style.cssText = 'font-weight:bold;border-bottom:none;';
+  totalRow.innerHTML = `<span>合計 ${pendingFiles.length} 件</span><span>${formatSize(total)}</span>`;
+  list.appendChild(totalRow);
+}
+
+function arrayBufferToBase64(buf){
+  let binary = '';
+  const bytes = new Uint8Array(buf);
+  const chunk = 0x8000;
+  for(let i=0;i<bytes.length;i+=chunk){
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i+chunk));
+  }
+  return btoa(binary);
+}
+function base64ToArrayBuffer(b64){
+  const binary = atob(b64);
+  const bytes = new Uint8Array(binary.length);
+  for(let i=0;i<binary.length;i++) bytes[i] = binary.charCodeAt(i);
+  return bytes.buffer;
+}
+function formatSize(n){
+  if(n<1024) return n+' B';
+  if(n<1024*1024) return (n/1024).toFixed(1)+' KB';
+  return (n/1024/1024).toFixed(1)+' MB';
+}
+function escapeHtml(s){
+  return s.replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// --- 暗号化まわり ---
+async function deriveKey(password, salt){
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw', enc.encode(password), {name:'PBKDF2'}, false, ['deriveKey']
+  );
+  return crypto.subtle.deriveKey(
+    {name:'PBKDF2', salt, iterations:150000, hash:'SHA-256'},
+    keyMaterial,
+    {name:'AES-GCM', length:256},
+    false,
+    ['encrypt','decrypt']
+  );
+}
+
+$('buildBtn').onclick = async ()=>{
+  const msg = $('createMsg');
+  msg.className = 'msg'; msg.textContent='';
+  $('shareBtn').classList.add('hidden');
+  builtFile = null;
+  const name = $('folderName').value.trim();
+  const pass = $('folderPass').value;
+  const pass2 = $('folderPass2').value;
+
+  if(!name){ msg.className='msg error'; msg.textContent='フォルダ名を入力してください。'; return; }
+  if(!pass || pass.length<4){ msg.className='msg error'; msg.textContent='パスワードは4文字以上にしてください。'; return; }
+  if(pass!==pass2){ msg.className='msg error'; msg.textContent='パスワードが一致しません。'; return; }
+  if(pendingFiles.length===0){ msg.className='msg error'; msg.textContent='ファイルを1つ以上選択してください。'; return; }
+
+  msg.textContent = '暗号化中…';
+
+  try{
+    const payload = JSON.stringify({
+      folderName:name,
+      createdAt:new Date().toISOString(),
+      files:pendingFiles
+    });
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const key = await deriveKey(pass, salt);
+    const enc = new TextEncoder();
+    const ciphertext = await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, enc.encode(payload));
+
+    // 出力フォーマット: [salt16][iv12][ciphertext...]
+    const out = new Uint8Array(16+12+ciphertext.byteLength);
+    out.set(salt,0);
+    out.set(iv,16);
+    out.set(new Uint8Array(ciphertext),28);
+
+    // 共有用に File として保持
+    builtFile = new File([out], name + '.himitsu', {type:'application/octet-stream'});
+
+    const url = URL.createObjectURL(builtFile);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = name + '.himitsu';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url), 5000);
+
+    // 共有ボタンを表示（Web Share API対応時のみ）
+    const canShareFile = navigator.canShare && navigator.canShare({files:[builtFile]});
+    if(canShareFile){
+      $('shareBtn').classList.remove('hidden');
+    }
+
+    msg.className='msg ok';
+    msg.textContent = canShareFile
+      ? `作成完了：${name}.himitsu を保存しました。下の緑のボタンからLINEなどに直接送れます。`
+      : `作成完了：${name}.himitsu を保存しました。「ファイル」アプリからLINEに添付するか、外部ストレージに移動してください。（この環境では直接共有に非対応です。Safariで開くと緑の共有ボタンが使えます）`;
+  }catch(err){
+    msg.className='msg error';
+    msg.textContent = '作成に失敗しました：'+err.message;
+  }
+};
+
+// --- 開く処理 ---
+let selectedOpenFile = null;
+$('openFilePicker').addEventListener('change', e=>{
+  selectedOpenFile = e.target.files[0] || null;
+});
+
+$('openBtn').onclick = async ()=>{
+  const msg = $('openMsg');
+  msg.className='msg'; msg.textContent='';
+  $('openedResult').innerHTML='';
+
+  if(!selectedOpenFile){ msg.className='msg error'; msg.textContent='.himitsu ファイルを選択してください。'; return; }
+  const pass = $('openPass').value;
+  if(!pass){ msg.className='msg error'; msg.textContent='パスワードを入力してください。'; return; }
+
+  msg.textContent='復号中…';
+
+  try{
+    const buf = await selectedOpenFile.arrayBuffer();
+    const bytes = new Uint8Array(buf);
+    const salt = bytes.slice(0,16);
+    const iv = bytes.slice(16,28);
+    const ciphertext = bytes.slice(28);
+
+    const key = await deriveKey(pass, salt);
+    const plainBuf = await crypto.subtle.decrypt({name:'AES-GCM', iv}, key, ciphertext);
+    const dec = new TextDecoder();
+    const data = JSON.parse(dec.decode(plainBuf));
+
+    msg.className='msg ok';
+    msg.textContent = `「${data.folderName}」を開きました（作成日時: ${new Date(data.createdAt).toLocaleString('ja-JP')}）`;
+
+    renderOpened(data.files);
+  }catch(err){
+    msg.className='msg error';
+    msg.textContent = 'パスワードが違うか、ファイルが壊れています。';
+  }
+};
+
+function renderOpened(files){
+  const wrap = $('openedResult');
+  wrap.innerHTML = '';
+  files.forEach(f=>{
+    const item = document.createElement('div');
+    item.className = 'opened-item';
+    item.innerHTML = `<span class="name">${escapeHtml(f.name)}（${formatSize(f.size)}）</span>`;
+    const btn = document.createElement('button');
+    btn.textContent = '表示/保存';
+    btn.onclick = ()=> showFile(f, item);
+    item.appendChild(btn);
+    wrap.appendChild(item);
+  });
+}
+
+function showFile(f, container){
+  let preview = container.querySelector('.preview');
+  if(preview){ preview.remove(); return; }
+
+  const buf = base64ToArrayBuffer(f.data);
+  const blob = new Blob([buf], {type:f.type});
+  const url = URL.createObjectURL(blob);
+
+  preview = document.createElement('div');
+  preview.className = 'preview';
+
+  if(f.type.startsWith('image/')){
+    preview.innerHTML = `<img src="${url}">`;
+  }else if(f.type==='text/plain'){
+    const text = new TextDecoder().decode(buf);
+    preview.innerHTML = `<pre style="white-space:pre-wrap;text-align:left;font-size:12px;">${escapeHtml(text.slice(0,3000))}</pre>`;
+  }else{
+    preview.innerHTML = '';
+  }
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = f.name;
+  a.textContent = 'このファイルを保存';
+  a.className = 'btn secondary';
+  a.style.marginTop='8px';
+  preview.appendChild(a);
+
+  container.appendChild(preview);
+}
+</script>
+</body>
+</html>
