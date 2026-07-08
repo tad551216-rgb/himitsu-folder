@@ -3,24 +3,26 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>秘密フォルダ - つくる手帖</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#2c5077">
+<title>秘密フォルダⅡ - つくる手帖</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="秘密フォルダ">
-<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-title" content="ひみつⅡ">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
 <style>
   :root{
-    --paper:#f7f3ea;
+    --paper:#f7f4ea;
     --grid:#e4ddc9;
     --indigo:#2c5077;
     --vermillion:#c9472e;
     --ink:#333333;
+    --ok:#3a7a4e;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{
-    margin:0;padding:0;height:100%;
+    margin:0;padding:0;min-height:100%;
     background-color:var(--paper);
     background-image:
       linear-gradient(var(--grid) 1px, transparent 1px),
@@ -30,450 +32,719 @@
     color:var(--ink);
   }
   header{
-    padding:18px 16px 10px;
+    padding:calc(env(safe-area-inset-top) + 14px) 16px 10px;
     text-align:center;
     border-bottom:2px solid var(--indigo);
-    background:rgba(247,243,234,0.9);
+    background:rgba(247,244,234,0.92);
   }
-  header h1{
-    margin:0;font-size:20px;color:var(--indigo);letter-spacing:0.05em;
-  }
+  header h1{margin:0;font-size:20px;color:var(--indigo);letter-spacing:0.05em;}
   header p{margin:4px 0 0;font-size:12px;color:#777;}
-  main{max-width:480px;margin:0 auto;padding:16px;}
-  .tabs{display:flex;gap:8px;margin-bottom:16px;}
-  .tab{
-    flex:1;padding:10px;text-align:center;border:2px solid var(--indigo);
-    border-radius:8px;color:var(--indigo);font-size:14px;font-weight:bold;
-    background:#fff;cursor:pointer;
+  main{max-width:520px;margin:0 auto;padding:14px 14px calc(env(safe-area-inset-bottom) + 40px);}
+
+  .tabs{display:flex;gap:8px;margin-bottom:14px;}
+  .tabs button{
+    flex:1;padding:10px 0;font-size:15px;border-radius:8px;
+    border:1.5px solid var(--indigo);background:transparent;color:var(--indigo);
+    font-weight:600;cursor:pointer;
   }
-  .tab.active{background:var(--indigo);color:#fff;}
-  .card{
-    background:#fffdf8;border:2px solid var(--indigo);border-radius:10px;
-    padding:16px;margin-bottom:16px;
+  .tabs button.active{background:var(--indigo);color:#fff;}
+
+  section.card{
+    background:rgba(255,255,255,0.72);
+    border:1px solid var(--grid);
+    border-radius:10px;
+    padding:14px;
+    margin-bottom:14px;
   }
-  .card h2{margin:0 0 12px;font-size:15px;color:var(--indigo);}
-  label{display:block;font-size:13px;color:#555;margin:10px 0 4px;}
-  input[type=text], input[type=password]{
-    width:100%;padding:10px;border:1px solid #ccc;border-radius:6px;
-    font-size:15px;background:#fff;
+  section.card h2{
+    margin:0 0 10px;font-size:15px;color:var(--indigo);
+    border-left:4px solid var(--vermillion);padding-left:8px;
   }
-  .filepick{
-    display:block;width:100%;padding:12px;text-align:center;
-    border:2px dashed #aaa;border-radius:8px;font-size:13px;color:#666;
-    margin-top:8px;background:#fcfaf4;cursor:pointer;
-  }
-  .filelist{margin-top:10px;font-size:13px;}
-  .filelist div{padding:6px 8px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;}
-  .btn{
-    display:block;width:100%;padding:13px;margin-top:14px;border:none;
-    border-radius:8px;font-size:15px;font-weight:bold;color:#fff;
-    background:var(--vermillion);cursor:pointer;
-  }
-  .btn:disabled{background:#ccc;}
-  .btn.secondary{background:var(--indigo);}
-  .btn.share{background:#06c755;} /* LINEグリーン */
-  .btn.share:disabled{background:#ccc;}
-  .guide{
-    margin-top:14px;padding:12px;border:1px solid var(--indigo);
-    border-radius:8px;background:#fcfaf4;font-size:13px;line-height:1.7;
-  }
-  .guide b{color:var(--indigo);}
-  .guide ol{margin:6px 0 0;padding-left:20px;}
-  .guide li{margin-bottom:4px;}
-  .msg{margin-top:10px;font-size:13px;text-align:center;}
-  .msg.error{color:var(--vermillion);}
-  .msg.ok{color:#2b7a3d;}
-  .opened-item{
-    padding:10px;border:1px solid #ddd;border-radius:8px;margin-bottom:8px;
+  label.fld{display:block;font-size:13px;color:#555;margin:10px 0 4px;}
+  input[type=text],input[type=password]{
+    width:100%;padding:10px;font-size:16px;border:1px solid #bbb;border-radius:8px;
     background:#fff;
   }
-  .opened-item .head{
-    display:flex;justify-content:space-between;align-items:center;gap:8px;
+  .btn{
+    display:block;width:100%;padding:13px 0;margin-top:12px;
+    font-size:16px;font-weight:600;border-radius:9px;border:none;cursor:pointer;
   }
-  .opened-item .name{font-size:13px;word-break:break-all;flex:1;}
-  .opened-item .head button{
-    border:1px solid var(--indigo);color:var(--indigo);background:#fff;
-    border-radius:6px;padding:6px 10px;font-size:12px;white-space:nowrap;flex-shrink:0;
+  .btn-primary{background:var(--indigo);color:#fff;}
+  .btn-accent{background:var(--vermillion);color:#fff;}
+  .btn-ghost{background:transparent;border:1.5px solid var(--indigo);color:var(--indigo);}
+  .btn:disabled{opacity:0.45;}
+  .btn-sm{
+    padding:7px 12px;font-size:13px;border-radius:7px;border:none;
+    font-weight:600;cursor:pointer;white-space:nowrap;
   }
-  .preview{margin-top:10px;text-align:center;}
-  .preview img{max-width:100%;border-radius:6px;}
-  .small{font-size:11px;color:#888;margin-top:6px;}
+
+  .filelist{list-style:none;margin:10px 0 0;padding:0;}
+  .filelist li{
+    display:flex;align-items:center;gap:8px;
+    padding:8px 4px;border-bottom:1px dashed var(--grid);font-size:14px;
+  }
+  .filelist .fname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .filelist .fsize{color:#888;font-size:12px;}
+  .filelist .del{
+    background:none;border:none;color:var(--vermillion);font-size:18px;cursor:pointer;padding:2px 6px;
+  }
+  .total{font-size:12px;color:#666;margin-top:6px;text-align:right;}
+
+  .progresswrap{margin-top:12px;display:none;}
+  .progressbar{
+    height:10px;border-radius:5px;background:#e6e0d0;overflow:hidden;
+  }
+  .progressbar > div{
+    height:100%;width:0%;background:var(--indigo);transition:width .15s;
+  }
+  .progresstext{font-size:12px;color:#666;margin-top:4px;text-align:center;}
+
+  .note{font-size:12px;color:#777;line-height:1.7;margin-top:8px;}
+  .warn{color:var(--vermillion);}
+  .okmsg{color:var(--ok);font-weight:600;font-size:14px;margin-top:10px;display:none;}
+
+  .facebox{
+    margin-top:12px;padding:10px;border:1px dashed var(--indigo);border-radius:8px;
+    font-size:13px;
+  }
+  .facebox .row{display:flex;align-items:center;gap:8px;}
+  .facebox input[type=checkbox]{width:20px;height:20px;}
+
+  /* 開いたファイル一覧 */
+  .openlist{list-style:none;margin:10px 0 0;padding:0;}
+  .openlist li{
+    border-bottom:1px dashed var(--grid);padding:10px 2px;
+  }
+  .openlist .head{display:flex;align-items:center;gap:8px;}
+  .openlist .head .fname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px;font-weight:600;}
+  .openlist .head .fsize{color:#888;font-size:12px;white-space:nowrap;}
+  .openlist .actions{display:flex;gap:8px;margin-top:8px;}
+  .preview{margin-top:10px;display:none;}
+  .preview img,.preview video{max-width:100%;border-radius:8px;background:#000;}
+  .preview audio{width:100%;}
+  .preview pre{
+    background:#fff;border:1px solid var(--grid);border-radius:8px;padding:10px;
+    font-size:13px;overflow-x:auto;white-space:pre-wrap;word-break:break-all;max-height:300px;overflow-y:auto;
+  }
+  .preview iframe{width:100%;height:420px;border:1px solid var(--grid);border-radius:8px;background:#fff;}
+
+  /* 保存方法ダイアログ */
+  .overlay{
+    position:fixed;inset:0;background:rgba(51,51,51,0.45);
+    display:none;align-items:center;justify-content:center;z-index:50;
+    padding:20px;
+  }
+  .dialog{
+    background:var(--paper);border:1.5px solid var(--indigo);border-radius:12px;
+    padding:16px;width:100%;max-width:360px;
+  }
+  .dialog h3{margin:0 0 4px;font-size:15px;color:var(--indigo);}
+  .dialog .dfile{font-size:13px;color:#666;margin:0 0 6px;word-break:break-all;}
+
   .hidden{display:none;}
+  footer{
+    text-align:center;font-size:11px;color:#999;padding:10px 0 24px;
+  }
 </style>
 </head>
 <body>
 <header>
-  <h1>秘密フォルダ</h1>
-  <p>作成・保管・閲覧まで、すべて端末内で完結します</p>
+  <h1>&#128274; 秘密フォルダⅡ</h1>
+  <p>大容量ファイル対応・FaceID開錠 / 通信なし・端末内で完結</p>
 </header>
 <main>
   <div class="tabs">
-    <div class="tab active" id="tabCreate">作成</div>
-    <div class="tab" id="tabOpen">開く</div>
+    <button id="tabCreate" class="active">つくる</button>
+    <button id="tabOpen">ひらく</button>
   </div>
 
-  <!-- 作成タブ -->
+  <!-- ========== つくる ========== -->
   <div id="paneCreate">
-    <div class="card">
-      <h2>新しい秘密フォルダを作成</h2>
-      <label>フォルダ名</label>
-      <input type="text" id="folderName" placeholder="例：家族写真">
-      <label>パスワード</label>
-      <input type="password" id="folderPass" placeholder="6文字以上を推奨">
-      <label>パスワード（確認）</label>
-      <input type="password" id="folderPass2" placeholder="もう一度入力">
+    <section class="card">
+      <h2>フォルダに入れるファイル</h2>
+      <button class="btn btn-ghost" id="btnAddFiles">＋ ファイルを追加</button>
+      <input type="file" id="pickFiles" multiple class="hidden">
+      <ul class="filelist" id="createList"></ul>
+      <div class="total" id="createTotal"></div>
+      <p class="note">動画など大きいファイルもそのまま入れられます(1ファイル2GB程度まで)。大きい動画は1本ずつ別フォルダに分けると安全です。</p>
+    </section>
 
-      <label>格納するファイル（何度でも追加できます）</label>
-      <input type="file" id="filesInput" multiple class="filepick">
-      <div class="filelist" id="createFileList"></div>
+    <section class="card">
+      <h2>鍵の設定</h2>
+      <label class="fld">フォルダ名</label>
+      <input type="text" id="folderName" placeholder="例: おもいで動画" autocomplete="off">
+      <label class="fld">PIN(パスワード)</label>
+      <input type="password" id="pin1" placeholder="4文字以上" autocomplete="new-password">
+      <label class="fld">PIN(確認)</label>
+      <input type="password" id="pin2" placeholder="もう一度入力" autocomplete="new-password">
 
-      <button class="btn" id="buildBtn">暗号化してファイルを作成</button>
-      <button class="btn secondary hidden" id="shareBtn">"ファイル"に保存 / 共有</button>
-      <div class="msg" id="createMsg"></div>
-      <div class="guide hidden" id="lineGuide">
-        <b>LINEで送るには</b>
-        <ol>
-          <li>上のボタンで「<b>"ファイル"に保存</b>」を選んで保存</li>
-          <li><b>LINE</b>を開き、トーク画面の「<b>＋</b>」→「<b>ファイル</b>」をタップ</li>
-          <li>保存した <b>.himitsu</b> ファイルを選んで送信</li>
-        </ol>
-        <div class="small">※ 共有シートからLINEを直接選ぶと形式の関係で送れないことがあります。上の手順が確実です。パスワードはLINEとは別の方法（口頭・電話など）で伝えてください。</div>
+      <div class="facebox" id="faceBox">
+        <div class="row">
+          <input type="checkbox" id="useFace">
+          <label for="useFace">FaceIDでも開けるようにする</label>
+        </div>
+        <p class="note" id="faceNote">このiPhoneのFaceID(パスキー)で開錠できるようになります。別の端末で開くときはPINを使います。</p>
       </div>
-      <div class="small">作成後、共有シートから「ファイル」アプリを選んで外部ストレージ（USBメモリなど）に保存してください。</div>
-    </div>
+
+      <button class="btn btn-primary" id="btnEncrypt">&#128274; 暗号化して保存</button>
+      <div class="progresswrap" id="encProg">
+        <div class="progressbar"><div id="encBar"></div></div>
+        <div class="progresstext" id="encText"></div>
+      </div>
+      <div class="okmsg" id="encDone">保存しました。共有シートから「ファイルに保存」でSDカードへ移せます。</div>
+    </section>
   </div>
 
-  <!-- 開くタブ -->
+  <!-- ========== ひらく ========== -->
   <div id="paneOpen" class="hidden">
-    <div class="card">
-      <h2>秘密フォルダを開く</h2>
-      <label>.himitsu ファイルを選択</label>
-      <input type="file" id="openFilePicker" accept=".himitsu" class="filepick">
-      <label>パスワード</label>
-      <input type="password" id="openPass" placeholder="パスワードを入力">
-      <button class="btn secondary" id="openBtn">復号して開く</button>
-      <div class="msg" id="openMsg"></div>
-    </div>
+    <section class="card">
+      <h2>.himitsu ファイルを選ぶ</h2>
+      <button class="btn btn-ghost" id="btnPickContainer">&#128193; ファイルを選択</button>
+      <input type="file" id="pickContainer" class="hidden">
+      <p class="note" id="containerInfo"></p>
 
-    <div id="openedResult"></div>
+      <div id="unlockArea" class="hidden">
+        <button class="btn btn-accent" id="btnFaceUnlock">&#128100; FaceIDで開く</button>
+        <label class="fld">またはPINで開く</label>
+        <input type="password" id="pinOpen" placeholder="PINを入力" autocomplete="off">
+        <button class="btn btn-primary" id="btnPinUnlock">&#128275; PINで開く</button>
+        <div class="progresswrap" id="decProg">
+          <div class="progressbar"><div id="decBar"></div></div>
+          <div class="progresstext" id="decText"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card hidden" id="openedCard">
+      <h2 id="openedTitle">中身</h2>
+      <ul class="openlist" id="openList"></ul>
+      <p class="note">「表示」でその場で見られます(動画は復号に少し時間がかかります)。「保存/共有」で共有シートから取り出せます。</p>
+      <button class="btn btn-accent" id="btnClear">&#128274; とじてクリア(復号内容を消去)</button>
+    </section>
   </div>
+
+  <footer>つくる手帖 / データは外部に送信されません</footer>
 </main>
 
-<script>
-const $ = id => document.getElementById(id);
+<div class="overlay" id="saveOverlay">
+  <div class="dialog">
+    <h3>保存方法をえらぶ</h3>
+    <p class="dfile" id="saveFileName"></p>
+    <button class="btn btn-primary" id="btnSavePick">&#128193; 保存先を選んで保存</button>
+    <p class="note" id="savePickNote">iPhoneでは共有シートの「ファイルに保存」から、SDカードなど保存先のフォルダを選べます。</p>
+    <button class="btn btn-ghost" id="btnSaveDl">&#11015; ダウンロード</button>
+    <button class="btn btn-ghost" id="btnSaveCancel">キャンセル</button>
+  </div>
+</div>
 
-// --- タブ切り替え ---
-$('tabCreate').onclick = () => switchTab('create');
-$('tabOpen').onclick = () => switchTab('open');
-function switchTab(which){
-  $('tabCreate').classList.toggle('active', which==='create');
-  $('tabOpen').classList.toggle('active', which==='open');
-  $('paneCreate').classList.toggle('hidden', which!=='create');
-  $('paneOpen').classList.toggle('hidden', which!=='open');
+<script>
+"use strict";
+/* =============================================================
+   秘密フォルダⅡ  .himitsu v2 フォーマット
+   [0..3]  マジック "HMT2"
+   [4..7]  ヘッダ長 uint32 LE
+   [8.. ]  ヘッダJSON(UTF-8)
+             { v:2, chunkSize, kdf:{salt,iter},
+               wraps:{ pin:{iv,data}, prf?:{credId,salt,iv,data} },
+               meta:{iv,data}  ← ファイル一覧(名前含む)はマスターキーで暗号化 }
+   [以降]  チャンク列: 各チャンク = IV(12) + 暗号文(平文長+16)
+           ファイル順・オフセット順。AADに "f{i}c{j}" を付与し並べ替えを防止
+   鍵: ランダム256bitマスターキー。PIN(PBKDF2)とFaceID(WebAuthn PRF→HKDF)
+       それぞれで包んで(wrap)ヘッダに保存。
+   ============================================================= */
+
+const MAGIC = [0x48,0x4D,0x54,0x32]; // "HMT2"
+const CHUNK_SIZE = 8 * 1024 * 1024;  // 8MB
+const PBKDF2_ITER = 310000;
+const LS_CRED = "himitsu2_credId";
+
+const $ = id => document.getElementById(id);
+const enc = new TextEncoder();
+const dec = new TextDecoder();
+
+/* ---------- ユーティリティ ---------- */
+function randBytes(n){ const a = new Uint8Array(n); crypto.getRandomValues(a); return a; }
+function b64(buf){
+  const u = buf instanceof Uint8Array ? buf : new Uint8Array(buf);
+  let s = ""; const STEP = 0x8000;
+  for(let i=0;i<u.length;i+=STEP) s += String.fromCharCode.apply(null, u.subarray(i,i+STEP));
+  return btoa(s);
+}
+function unb64(s){
+  const bin = atob(s); const u = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) u[i] = bin.charCodeAt(i);
+  return u;
+}
+function u32le(n){
+  const b = new Uint8Array(4); new DataView(b.buffer).setUint32(0, n, true); return b;
+}
+function fmtSize(n){
+  if(n >= 1024*1024*1024) return (n/1024/1024/1024).toFixed(2)+" GB";
+  if(n >= 1024*1024) return (n/1024/1024).toFixed(1)+" MB";
+  if(n >= 1024) return (n/1024).toFixed(0)+" KB";
+  return n+" B";
+}
+function aad(fi, ci){ return enc.encode("f"+fi+"c"+ci); }
+
+/* ---------- 鍵まわり ---------- */
+async function keyFromPin(pin, salt, iter){
+  const base = await crypto.subtle.importKey("raw", enc.encode(pin), "PBKDF2", false, ["deriveKey"]);
+  return crypto.subtle.deriveKey(
+    {name:"PBKDF2", salt, iterations:iter, hash:"SHA-256"},
+    base, {name:"AES-GCM", length:256}, false, ["encrypt","decrypt"]);
+}
+async function keyFromPrf(prfOutput){
+  const base = await crypto.subtle.importKey("raw", prfOutput, "HKDF", false, ["deriveKey"]);
+  return crypto.subtle.deriveKey(
+    {name:"HKDF", hash:"SHA-256", salt:new Uint8Array(0), info:enc.encode("himitsu2-wrap")},
+    base, {name:"AES-GCM", length:256}, false, ["encrypt","decrypt"]);
+}
+async function wrapMaster(masterRaw, wrapKey){
+  const iv = randBytes(12);
+  const data = await crypto.subtle.encrypt({name:"AES-GCM", iv}, wrapKey, masterRaw);
+  return {iv:b64(iv), data:b64(data)};
+}
+async function unwrapMaster(wrapObj, wrapKey){
+  const raw = await crypto.subtle.decrypt(
+    {name:"AES-GCM", iv:unb64(wrapObj.iv)}, wrapKey, unb64(wrapObj.data));
+  return crypto.subtle.importKey("raw", raw, "AES-GCM", false, ["encrypt","decrypt"]);
 }
 
-// --- ファイル選択 → base64化して保持 ---
-let pendingFiles = []; // {name, type, size, data(base64)}
-let builtFile = null;  // 作成済みの .himitsu File（共有用）
+/* ---------- WebAuthn PRF (FaceID) ---------- */
+const secureCtx = window.isSecureContext && !!window.PublicKeyCredential;
 
-$('shareBtn').onclick = async ()=>{
-  if(!builtFile) return;
+async function ensurePasskey(){
+  // 登録済みならそれを使う
+  const saved = localStorage.getItem(LS_CRED);
+  if(saved) return unb64(saved);
+  const cred = await navigator.credentials.create({publicKey:{
+    challenge: randBytes(32),
+    rp: {name:"秘密フォルダⅡ", id: location.hostname},
+    user: {id: randBytes(16), name:"himitsu2", displayName:"秘密フォルダⅡ"},
+    pubKeyCredParams: [{type:"public-key",alg:-7},{type:"public-key",alg:-257}],
+    authenticatorSelection: {authenticatorAttachment:"platform", residentKey:"required", userVerification:"required"},
+    extensions: {prf:{}}
+  }});
+  const ext = cred.getClientExtensionResults();
+  if(!ext.prf || !ext.prf.enabled){
+    throw new Error("この端末はFaceID鍵導出(PRF)に未対応です。iOS 18以降のSafariが必要です。");
+  }
+  const credId = new Uint8Array(cred.rawId);
+  localStorage.setItem(LS_CRED, b64(credId));
+  return credId;
+}
+async function getPrfOutput(credIdBytes, prfSalt){
+  const assertion = await navigator.credentials.get({publicKey:{
+    challenge: randBytes(32),
+    rpId: location.hostname,
+    allowCredentials: [{type:"public-key", id:credIdBytes}],
+    userVerification: "required",
+    extensions: {prf:{eval:{first: prfSalt}}}
+  }});
+  const ext = assertion.getClientExtensionResults();
+  const out = ext.prf && ext.prf.results && ext.prf.results.first;
+  if(!out) throw new Error("FaceID鍵導出(PRF)の結果を取得できませんでした。");
+  return out;
+}
+
+/* ---------- タブ切替 ---------- */
+$("tabCreate").onclick = () => switchTab(true);
+$("tabOpen").onclick = () => switchTab(false);
+function switchTab(create){
+  $("tabCreate").classList.toggle("active", create);
+  $("tabOpen").classList.toggle("active", !create);
+  $("paneCreate").classList.toggle("hidden", !create);
+  $("paneOpen").classList.toggle("hidden", create);
+}
+
+/* ---------- つくる: ファイル追加 ---------- */
+let createFiles = [];
+$("btnAddFiles").onclick = () => $("pickFiles").click();
+$("pickFiles").onchange = e => {
+  for(const f of e.target.files) createFiles.push(f);
+  e.target.value = "";
+  renderCreateList();
+};
+function renderCreateList(){
+  const ul = $("createList"); ul.innerHTML = "";
+  createFiles.forEach((f, i) => {
+    const li = document.createElement("li");
+    const name = document.createElement("span"); name.className = "fname"; name.textContent = f.name;
+    const size = document.createElement("span"); size.className = "fsize"; size.textContent = fmtSize(f.size);
+    const del = document.createElement("button"); del.className = "del"; del.textContent = "✕";
+    del.onclick = () => { createFiles.splice(i,1); renderCreateList(); };
+    li.append(name, size, del); ul.appendChild(li);
+  });
+  const total = createFiles.reduce((a,f)=>a+f.size, 0);
+  $("createTotal").textContent = createFiles.length ? `${createFiles.length}件 / 合計 ${fmtSize(total)}` : "";
+}
+
+/* FaceID対応状況の表示 */
+if(!secureCtx){
+  $("useFace").disabled = true;
+  $("faceNote").innerHTML = '<span class="warn">FaceID開錠はhttps(GitHub Pages等)で開いたときのみ使えます。</span>';
+}
+
+/* ---------- つくる: 暗号化 ---------- */
+$("btnEncrypt").onclick = async () => {
   try{
-    await navigator.share({
-      files:[builtFile],
-      title:builtFile.name
-    });
+    const name = $("folderName").value.trim() || "himitsu";
+    const pin = $("pin1").value;
+    if(createFiles.length === 0){ alert("ファイルを追加してください。"); return; }
+    if(pin.length < 4){ alert("PINは4文字以上にしてください。"); return; }
+    if(pin !== $("pin2").value){ alert("PIN(確認)が一致しません。"); return; }
+
+    // FaceID を使う場合は先に認証を済ませる(ユーザー操作の直後に実行する必要があるため)
+    let prfWrapInput = null;
+    if($("useFace").checked){
+      const credId = await ensurePasskey();
+      const prfSalt = randBytes(32);
+      const prfOut = await getPrfOutput(credId, prfSalt);
+      prfWrapInput = {credId, prfSalt, prfKey: await keyFromPrf(prfOut)};
+    }
+
+    $("btnEncrypt").disabled = true;
+    $("encDone").style.display = "none";
+    $("encProg").style.display = "block";
+    setProg("enc", 0, "鍵を準備中…");
+
+    // マスターキー
+    const masterRaw = randBytes(32);
+    const masterKey = await crypto.subtle.importKey("raw", masterRaw, "AES-GCM", false, ["encrypt"]);
+
+    // PINラップ
+    const kdfSalt = randBytes(16);
+    const pinKey = await keyFromPin(pin, kdfSalt, PBKDF2_ITER);
+    const wraps = { pin: await wrapMaster(masterRaw, pinKey) };
+
+    // FaceID(PRF)ラップ
+    if(prfWrapInput){
+      const w = await wrapMaster(masterRaw, prfWrapInput.prfKey);
+      wraps.prf = {credId: b64(prfWrapInput.credId), salt: b64(prfWrapInput.prfSalt), iv: w.iv, data: w.data};
+    }
+
+    // ファイル一覧(メタ)を暗号化
+    const meta = { files: createFiles.map(f => ({name:f.name, size:f.size, type:f.type||""})) };
+    const metaIv = randBytes(12);
+    const metaCt = await crypto.subtle.encrypt(
+      {name:"AES-GCM", iv:metaIv, additionalData:enc.encode("meta")}, masterKey, enc.encode(JSON.stringify(meta)));
+
+    const header = {
+      v: 2, chunkSize: CHUNK_SIZE,
+      kdf: {salt: b64(kdfSalt), iter: PBKDF2_ITER},
+      wraps,
+      meta: {iv: b64(metaIv), data: b64(metaCt)}
+    };
+    const headerBytes = enc.encode(JSON.stringify(header));
+    const parts = [new Blob([new Uint8Array(MAGIC), u32le(headerBytes.length), headerBytes])];
+
+    // チャンク暗号化(メモリに溜めずBlob片として積む)
+    const total = createFiles.reduce((a,f)=>a+f.size, 0) || 1;
+    let done = 0;
+    for(let fi = 0; fi < createFiles.length; fi++){
+      const f = createFiles[fi];
+      const nChunks = f.size === 0 ? 0 : Math.ceil(f.size / CHUNK_SIZE);
+      for(let ci = 0; ci < nChunks; ci++){
+        const off = ci * CHUNK_SIZE;
+        const buf = await f.slice(off, Math.min(off + CHUNK_SIZE, f.size)).arrayBuffer();
+        const iv = randBytes(12);
+        const ct = await crypto.subtle.encrypt(
+          {name:"AES-GCM", iv, additionalData:aad(fi,ci)}, masterKey, buf);
+        parts.push(new Blob([iv, new Uint8Array(ct)]));
+        done += buf.byteLength;
+        setProg("enc", done/total, `暗号化中… ${fmtSize(done)} / ${fmtSize(total)}`);
+        await new Promise(r => setTimeout(r, 0)); // UI更新の間を空ける
+      }
+    }
+
+    const outBlob = new Blob(parts, {type:"application/octet-stream"});
+    setProg("enc", 1, "保存の準備ができました");
+    await saveBlob(outBlob, name + ".himitsu");
+    $("encDone").style.display = "block";
   }catch(err){
-    // ユーザーがキャンセルした場合も例外になるため、無視
+    if(err && err.name === "NotAllowedError"){
+      alert("FaceID認証がキャンセルされました。");
+    }else{
+      alert("暗号化に失敗しました: " + (err.message || err));
+    }
+  }finally{
+    $("btnEncrypt").disabled = false;
+    $("encProg").style.display = "none";
   }
 };
 
-$('filesInput').addEventListener('change', async (e)=>{
-  const files = Array.from(e.target.files);
-  if(files.length===0) return;
-  const list = $('createFileList');
-  list.innerHTML = '読み込み中…';
-  for(const f of files){
-    const buf = await f.arrayBuffer();
-    const b64 = arrayBufferToBase64(buf);
-    // 同名ファイルは新しい方で上書き
-    const idx = pendingFiles.findIndex(p=>p.name===f.name);
-    const item = {name:f.name, type:f.type||'application/octet-stream', size:f.size, data:b64};
-    if(idx>=0) pendingFiles[idx] = item;
-    else pendingFiles.push(item);
-  }
-  e.target.value = ''; // 同じファイルを再選択してもchangeが発火するように
-  renderFileList();
-});
+function setProg(kind, ratio, text){
+  $(kind+"Bar").style.width = Math.round(ratio*100) + "%";
+  $(kind+"Text").textContent = text;
+}
 
-function renderFileList(){
-  const list = $('createFileList');
-  if(pendingFiles.length===0){
-    list.innerHTML = '（未選択）';
+/* 保存: ダイアログで方法を選ぶ
+   - PC(Chrome/Edge): showSaveFilePicker で保存先フォルダを直接指定
+   - iPhone: 共有シートの「ファイルに保存」→ SDカード等の保存先を選択 */
+function saveBlob(blob, filename){
+  return new Promise(resolve => {
+    const ov = $("saveOverlay");
+    $("saveFileName").textContent = `${filename} (${fmtSize(blob.size)})`;
+    $("savePickNote").style.display = window.showSaveFilePicker ? "none" : "block";
+    ov.style.display = "flex";
+    const close = () => { ov.style.display = "none"; resolve(); };
+    $("btnSavePick").onclick = async () => {
+      try{ await savePick(blob, filename); }
+      catch(e){
+        if(e && (e.name === "AbortError")) { /* ユーザーがキャンセル */ }
+        else alert("保存に失敗しました: " + (e.message || e));
+      }
+      close();
+    };
+    $("btnSaveDl").onclick = () => { saveDownload(blob, filename); close(); };
+    $("btnSaveCancel").onclick = close;
+  });
+}
+async function savePick(blob, filename){
+  if(window.showSaveFilePicker){
+    const handle = await window.showSaveFilePicker({suggestedName: filename});
+    const writable = await handle.createWritable();
+    await writable.write(blob);
+    await writable.close();
     return;
   }
-  list.innerHTML = '';
-  let total = 0;
-  pendingFiles.forEach((f, i)=>{
-    total += f.size;
-    const row = document.createElement('div');
-    const nameSpan = document.createElement('span');
-    nameSpan.textContent = f.name;
-    const right = document.createElement('span');
-    right.textContent = formatSize(f.size) + ' ';
-    const del = document.createElement('button');
-    del.textContent = '削除';
-    del.style.cssText = 'border:1px solid var(--vermillion);color:var(--vermillion);background:#fff;border-radius:5px;padding:2px 8px;font-size:11px;margin-left:6px;';
-    del.onclick = ()=>{ pendingFiles.splice(i,1); renderFileList(); };
-    right.appendChild(del);
-    row.appendChild(nameSpan);
-    row.appendChild(right);
-    list.appendChild(row);
-  });
-  const totalRow = document.createElement('div');
-  totalRow.style.cssText = 'font-weight:bold;border-bottom:none;';
-  totalRow.innerHTML = `<span>合計 ${pendingFiles.length} 件</span><span>${formatSize(total)}</span>`;
-  list.appendChild(totalRow);
-}
-
-function arrayBufferToBase64(buf){
-  let binary = '';
-  const bytes = new Uint8Array(buf);
-  const chunk = 0x8000;
-  for(let i=0;i<bytes.length;i+=chunk){
-    binary += String.fromCharCode.apply(null, bytes.subarray(i, i+chunk));
+  const file = new File([blob], filename, {type:"application/octet-stream"});
+  if(navigator.canShare && navigator.canShare({files:[file]})){
+    await navigator.share({files:[file]});
+    return;
   }
-  return btoa(binary);
+  saveDownload(blob, filename);
 }
-function base64ToArrayBuffer(b64){
-  const binary = atob(b64);
-  const bytes = new Uint8Array(binary.length);
-  for(let i=0;i<binary.length;i++) bytes[i] = binary.charCodeAt(i);
-  return bytes.buffer;
-}
-function formatSize(n){
-  if(n<1024) return n+' B';
-  if(n<1024*1024) return (n/1024).toFixed(1)+' KB';
-  return (n/1024/1024).toFixed(1)+' MB';
-}
-function escapeHtml(s){
-  return s.replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function saveDownload(blob, filename){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 30000);
 }
 
-// --- 暗号化まわり ---
-async function deriveKey(password, salt){
-  const enc = new TextEncoder();
-  const keyMaterial = await crypto.subtle.importKey(
-    'raw', enc.encode(password), {name:'PBKDF2'}, false, ['deriveKey']
-  );
-  return crypto.subtle.deriveKey(
-    {name:'PBKDF2', salt, iterations:150000, hash:'SHA-256'},
-    keyMaterial,
-    {name:'AES-GCM', length:256},
-    false,
-    ['encrypt','decrypt']
-  );
-}
+/* ---------- ひらく ---------- */
+let containerFile = null;
+let containerHeader = null;
+let containerDataStart = 0;
+let openedMasterKey = null;
 
-$('buildBtn').onclick = async ()=>{
-  const msg = $('createMsg');
-  msg.className = 'msg'; msg.textContent='';
-  $('shareBtn').classList.add('hidden');
-  $('lineGuide').classList.add('hidden');
-  builtFile = null;
-  const name = $('folderName').value.trim();
-  const pass = $('folderPass').value;
-  const pass2 = $('folderPass2').value;
-
-  if(!name){ msg.className='msg error'; msg.textContent='フォルダ名を入力してください。'; return; }
-  if(!pass || pass.length<4){ msg.className='msg error'; msg.textContent='パスワードは4文字以上にしてください。'; return; }
-  if(pass!==pass2){ msg.className='msg error'; msg.textContent='パスワードが一致しません。'; return; }
-  if(pendingFiles.length===0){ msg.className='msg error'; msg.textContent='ファイルを1つ以上選択してください。'; return; }
-
-  msg.textContent = '暗号化中…';
-
+$("btnPickContainer").onclick = () => $("pickContainer").click();
+$("pickContainer").onchange = async e => {
+  const f = e.target.files[0];
+  e.target.value = "";
+  if(!f) return;
+  resetOpened();
   try{
-    const payload = JSON.stringify({
-      folderName:name,
-      createdAt:new Date().toISOString(),
-      files:pendingFiles
-    });
-    const salt = crypto.getRandomValues(new Uint8Array(16));
-    const iv = crypto.getRandomValues(new Uint8Array(12));
-    const key = await deriveKey(pass, salt);
-    const enc = new TextEncoder();
-    const ciphertext = await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, enc.encode(payload));
-
-    // 出力フォーマット: [salt16][iv12][ciphertext...]
-    const out = new Uint8Array(16+12+ciphertext.byteLength);
-    out.set(salt,0);
-    out.set(iv,16);
-    out.set(new Uint8Array(ciphertext),28);
-
-    // 共有用に File として保持
-    builtFile = new File([out], name + '.himitsu', {type:'application/octet-stream'});
-
-    const isStandalone = window.navigator.standalone === true
-      || window.matchMedia('(display-mode: standalone)').matches;
-    const canShareFile = navigator.canShare && navigator.canShare({files:[builtFile]});
-
-    if(canShareFile){
-      $('shareBtn').classList.remove('hidden');
+    containerFile = f;
+    const head8 = new Uint8Array(await f.slice(0, 8).arrayBuffer());
+    const isV2 = MAGIC.every((b,i) => head8[i] === b);
+    if(!isV2){
+      $("containerInfo").innerHTML = '<span class="warn">これはⅡ形式ではありません。旧版の「秘密フォルダ」で開いてください。</span>';
+      containerFile = null;
+      return;
     }
+    const hlen = new DataView(head8.buffer).getUint32(4, true);
+    if(hlen <= 0 || hlen > 1024*1024) throw new Error("ヘッダが壊れています");
+    const hjson = dec.decode(await f.slice(8, 8 + hlen).arrayBuffer());
+    containerHeader = JSON.parse(hjson);
+    containerDataStart = 8 + hlen;
 
-    // standaloneモードではa[download]が動作しないことがあるため、
-    // 共有シート経由（「ファイルに保存」を含む）を主経路とする
-    if(!isStandalone){
-      const url = URL.createObjectURL(builtFile);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = name + '.himitsu';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(()=>URL.revokeObjectURL(url), 5000);
-    }
+    $("containerInfo").textContent = `${f.name} (${fmtSize(f.size)})`;
+    $("unlockArea").classList.remove("hidden");
+    const hasPrf = !!(containerHeader.wraps && containerHeader.wraps.prf) && secureCtx;
+    $("btnFaceUnlock").style.display = hasPrf ? "block" : "none";
+  }catch(err){
+    alert("ファイルを読み込めませんでした: " + (err.message || err));
+    containerFile = null;
+  }
+};
 
-    msg.className='msg ok';
-    if(isStandalone && canShareFile){
-      msg.textContent = `作成完了。下のボタンから「"ファイル"に保存」を選んで保存してください。`;
-    }else if(canShareFile){
-      msg.textContent = `作成完了：${name}.himitsu を保存しました。下のボタンからも保存先を選べます。`;
-    }else if(isStandalone){
-      msg.textContent = `作成完了しましたが、この環境では保存・共有の手段がありません。Safariで開き直してお試しください。`;
+function resetOpened(){
+  containerHeader = null; openedMasterKey = null; openedMeta = null;
+  $("unlockArea").classList.add("hidden");
+  $("openedCard").classList.add("hidden");
+  $("openList").innerHTML = "";
+  $("containerInfo").textContent = "";
+  $("pinOpen").value = "";
+  // 以前のプレビューURLを解放
+  for(const u of blobUrls) URL.revokeObjectURL(u);
+  blobUrls = [];
+}
+
+/* とじてクリア: 復号内容・鍵・選択ファイルをすべて消去して初期状態へ */
+$("btnClear").onclick = () => {
+  resetOpened();
+  containerFile = null;
+  $("containerInfo").textContent = "復号した内容を消去しました。";
+};
+
+$("btnFaceUnlock").onclick = async () => {
+  try{
+    const p = containerHeader.wraps.prf;
+    const prfOut = await getPrfOutput(unb64(p.credId), unb64(p.salt));
+    const prfKey = await keyFromPrf(prfOut);
+    openedMasterKey = await unwrapMaster({iv:p.iv, data:p.data}, prfKey);
+    await showContents();
+  }catch(err){
+    if(err && err.name === "NotAllowedError"){
+      alert("FaceID認証がキャンセルされました。");
     }else{
-      msg.textContent = `作成完了：${name}.himitsu をダウンロードに保存しました。`;
+      alert("FaceIDでの開錠に失敗しました。このフォルダを作った端末でない場合はPINをお使いください。");
     }
-    $('lineGuide').classList.remove('hidden');
-  }catch(err){
-    msg.className='msg error';
-    msg.textContent = '作成に失敗しました：'+err.message;
   }
 };
 
-// --- 開く処理 ---
-let selectedOpenFile = null;
-$('openFilePicker').addEventListener('change', e=>{
-  selectedOpenFile = e.target.files[0] || null;
-});
-
-$('openBtn').onclick = async ()=>{
-  const msg = $('openMsg');
-  msg.className='msg'; msg.textContent='';
-  $('openedResult').innerHTML='';
-
-  if(!selectedOpenFile){ msg.className='msg error'; msg.textContent='.himitsu ファイルを選択してください。'; return; }
-  const pass = $('openPass').value;
-  if(!pass){ msg.className='msg error'; msg.textContent='パスワードを入力してください。'; return; }
-
-  msg.textContent='復号中…';
-
+$("btnPinUnlock").onclick = async () => {
+  const pin = $("pinOpen").value;
+  if(!pin){ alert("PINを入力してください。"); return; }
+  $("btnPinUnlock").disabled = true;
   try{
-    const buf = await selectedOpenFile.arrayBuffer();
-    const bytes = new Uint8Array(buf);
-    const salt = bytes.slice(0,16);
-    const iv = bytes.slice(16,28);
-    const ciphertext = bytes.slice(28);
-
-    const key = await deriveKey(pass, salt);
-    const plainBuf = await crypto.subtle.decrypt({name:'AES-GCM', iv}, key, ciphertext);
-    const dec = new TextDecoder();
-    const data = JSON.parse(dec.decode(plainBuf));
-
-    msg.className='msg ok';
-    msg.textContent = `「${data.folderName}」を開きました（作成日時: ${new Date(data.createdAt).toLocaleString('ja-JP')}）`;
-
-    renderOpened(data.files);
+    const kdf = containerHeader.kdf;
+    const pinKey = await keyFromPin(pin, unb64(kdf.salt), kdf.iter);
+    openedMasterKey = await unwrapMaster(containerHeader.wraps.pin, pinKey);
+    await showContents();
   }catch(err){
-    msg.className='msg error';
-    msg.textContent = 'パスワードが違うか、ファイルが壊れています。';
+    alert("開錠できませんでした。PINが違います。");
+  }finally{
+    $("btnPinUnlock").disabled = false;
   }
 };
 
-function renderOpened(files){
-  const wrap = $('openedResult');
-  wrap.innerHTML = '';
-  files.forEach(f=>{
-    const item = document.createElement('div');
-    item.className = 'opened-item';
-    const head = document.createElement('div');
-    head.className = 'head';
-    const nameSpan = document.createElement('span');
-    nameSpan.className = 'name';
-    nameSpan.textContent = `${f.name}（${formatSize(f.size)}）`;
-    const btn = document.createElement('button');
-    btn.textContent = '表示/保存';
-    btn.onclick = ()=> showFile(f, item);
-    head.appendChild(nameSpan);
-    head.appendChild(btn);
-    item.appendChild(head);
-    wrap.appendChild(item);
+let openedMeta = null;
+let blobUrls = [];
+
+async function showContents(){
+  const m = containerHeader.meta;
+  const metaBuf = await crypto.subtle.decrypt(
+    {name:"AES-GCM", iv:unb64(m.iv), additionalData:enc.encode("meta")},
+    openedMasterKey, unb64(m.data));
+  openedMeta = JSON.parse(dec.decode(metaBuf));
+
+  // 各ファイルのチャンク開始オフセットを計算
+  const cs = containerHeader.chunkSize;
+  let pos = containerDataStart;
+  openedMeta.files.forEach(fm => {
+    fm._offset = pos;
+    const n = fm.size === 0 ? 0 : Math.ceil(fm.size / cs);
+    fm._chunks = n;
+    for(let i = 0; i < n; i++){
+      const pt = Math.min(cs, fm.size - i*cs);
+      pos += 12 + pt + 16;
+    }
   });
-}
 
-function showFile(f, container){
-  let preview = container.querySelector('.preview');
-  if(preview){ preview.remove(); return; }
+  $("openedTitle").textContent = `中身 (${openedMeta.files.length}件)`;
+  const ul = $("openList"); ul.innerHTML = "";
+  openedMeta.files.forEach((fm, idx) => {
+    const li = document.createElement("li");
+    const head = document.createElement("div"); head.className = "head";
+    const nm = document.createElement("span"); nm.className = "fname"; nm.textContent = fm.name;
+    const sz = document.createElement("span"); sz.className = "fsize"; sz.textContent = fmtSize(fm.size);
+    head.append(nm, sz);
+    const actions = document.createElement("div"); actions.className = "actions";
+    const bView = document.createElement("button");
+    bView.className = "btn-sm"; bView.style.background = "var(--indigo)"; bView.style.color = "#fff";
+    bView.textContent = "表示";
+    const bSave = document.createElement("button");
+    bSave.className = "btn-sm"; bSave.style.background = "var(--vermillion)"; bSave.style.color = "#fff";
+    bSave.textContent = "保存/共有";
+    actions.append(bView, bSave);
+    const prev = document.createElement("div"); prev.className = "preview";
+    li.append(head, actions, prev);
+    ul.appendChild(li);
 
-  const buf = base64ToArrayBuffer(f.data);
-  const file = new File([buf], f.name, {type:f.type});
-  const url = URL.createObjectURL(file);
-
-  preview = document.createElement('div');
-  preview.className = 'preview';
-
-  let previewable = true;
-  if(f.type.startsWith('image/')){
-    preview.innerHTML = `<img src="${url}">`;
-  }else if(f.type.startsWith('video/')){
-    preview.innerHTML = `<video src="${url}" controls playsinline style="max-width:100%;border-radius:6px;"></video>`;
-  }else if(f.type.startsWith('audio/')){
-    preview.innerHTML = `<audio src="${url}" controls style="width:100%;"></audio>`;
-  }else if(f.type==='text/plain' || f.type==='text/csv'){
-    const text = new TextDecoder().decode(buf);
-    preview.innerHTML = `<pre style="white-space:pre-wrap;text-align:left;font-size:12px;">${escapeHtml(text.slice(0,3000))}</pre>`;
-  }else if(f.type==='application/pdf'){
-    preview.innerHTML = `<embed src="${url}" type="application/pdf" style="width:100%;height:60vh;border:1px solid #ddd;border-radius:6px;">`;
-  }else{
-    previewable = false;
-    preview.innerHTML = `<div style="font-size:12px;color:#888;text-align:left;padding:4px 0;">この形式（${escapeHtml(f.name.split('.').pop() || '不明')}）はアプリ内で表示できません。下のボタンから共有シートを開き、対応アプリで開くか保存してください。</div>`;
-  }
-
-  const canShareFile = navigator.canShare && navigator.canShare({files:[file]});
-  const isStandalone = window.navigator.standalone === true
-    || window.matchMedia('(display-mode: standalone)').matches;
-
-  // 共有シートが使えるなら常に共有ボタン（対応アプリで開く・保存の両方をまかなえる）
-  if(canShareFile){
-    const btn = document.createElement('button');
-    btn.textContent = previewable ? 'このファイルを保存 / 共有' : '共有シートで開く / 保存';
-    btn.className = 'btn secondary';
-    btn.style.marginTop='8px';
-    btn.onclick = async ()=>{
-      try{ await navigator.share({files:[file], title:f.name}); }catch(e){}
+    bView.onclick = () => previewFile(idx, prev, bView);
+    bSave.onclick = async () => {
+      bSave.disabled = true;
+      try{
+        const blob = await decryptFile(idx, r => setProg("dec", r, `復号中… ${fm.name}`));
+        await saveBlob(blob, fm.name);
+      }catch(e){ alert("復号に失敗しました: " + (e.message||e)); }
+      finally{ bSave.disabled = false; $("decProg").style.display = "none"; }
     };
-    preview.appendChild(btn);
-  }
-  // ブラウザ（非standalone）ではダウンロードリンクも併設
-  if(!isStandalone){
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = f.name;
-    a.textContent = 'ダウンロード保存';
-    a.className = 'btn secondary';
-    a.style.marginTop='8px';
-    preview.appendChild(a);
-  }
+  });
 
-  container.appendChild(preview);
+  $("unlockArea").classList.add("hidden");
+  $("openedCard").classList.remove("hidden");
 }
 
-// --- Service Worker 登録（PWA・オフライン対応）---
-if('serviceWorker' in navigator){
-  window.addEventListener('load', ()=>{
-    navigator.serviceWorker.register('sw.js').catch(()=>{
-      // file:// やプレビュー環境では失敗するが動作には影響なし
-    });
+async function decryptFile(idx, onProgress){
+  const fm = openedMeta.files[idx];
+  const cs = containerHeader.chunkSize;
+  $("decProg").style.display = "block";
+  const parts = [];
+  let pos = fm._offset;
+  for(let ci = 0; ci < fm._chunks; ci++){
+    const pt = Math.min(cs, fm.size - ci*cs);
+    const rec = new Uint8Array(await containerFile.slice(pos, pos + 12 + pt + 16).arrayBuffer());
+    const iv = rec.subarray(0, 12);
+    const ct = rec.subarray(12);
+    const buf = await crypto.subtle.decrypt(
+      {name:"AES-GCM", iv, additionalData:aad(idx,ci)}, openedMasterKey, ct);
+    parts.push(new Blob([new Uint8Array(buf)]));
+    pos += 12 + pt + 16;
+    if(onProgress) onProgress((ci+1)/Math.max(1,fm._chunks));
+    await new Promise(r => setTimeout(r, 0));
+  }
+  return new Blob(parts, {type: fm.type || "application/octet-stream"});
+}
+
+async function previewFile(idx, prevEl, btn){
+  const fm = openedMeta.files[idx];
+  if(prevEl.style.display === "block"){
+    prevEl.style.display = "none"; prevEl.innerHTML = ""; btn.textContent = "表示";
+    return;
+  }
+  btn.disabled = true;
+  try{
+    const blob = await decryptFile(idx, r => setProg("dec", r, `復号中… ${fm.name}`));
+    $("decProg").style.display = "none";
+    prevEl.innerHTML = "";
+    const t = (fm.type || "").toLowerCase();
+    const name = fm.name.toLowerCase();
+    if(t.startsWith("image/")){
+      const img = document.createElement("img");
+      img.src = trackUrl(blob); prevEl.appendChild(img);
+    }else if(t.startsWith("video/") || /\.(mp4|mov|m4v)$/.test(name)){
+      const v = document.createElement("video");
+      v.controls = true; v.playsInline = true; v.src = trackUrl(blob);
+      prevEl.appendChild(v);
+    }else if(t.startsWith("audio/")){
+      const a = document.createElement("audio");
+      a.controls = true; a.src = trackUrl(blob); prevEl.appendChild(a);
+    }else if(t === "application/pdf" || name.endsWith(".pdf")){
+      const f = document.createElement("iframe");
+      f.src = trackUrl(blob); prevEl.appendChild(f);
+    }else if(t.startsWith("text/") || /\.(txt|csv|md|json|log)$/.test(name)){
+      const pre = document.createElement("pre");
+      pre.textContent = await blob.slice(0, 200*1024).text();
+      prevEl.appendChild(pre);
+    }else{
+      const p = document.createElement("p");
+      p.className = "note";
+      p.textContent = "この形式はアプリ内で表示できません。「保存/共有」で取り出して対応アプリで開いてください。";
+      prevEl.appendChild(p);
+    }
+    prevEl.style.display = "block";
+    btn.textContent = "とじる";
+  }catch(e){
+    alert("復号に失敗しました: " + (e.message||e));
+  }finally{
+    btn.disabled = false;
+    $("decProg").style.display = "none";
+  }
+}
+function trackUrl(blob){
+  const u = URL.createObjectURL(blob);
+  blobUrls.push(u);
+  return u;
+}
+
+/* ---------- Service Worker ---------- */
+if("serviceWorker" in navigator && location.protocol.startsWith("http")){
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(()=>{});
   });
 }
 </script>

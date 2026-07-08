@@ -1,16 +1,15 @@
 {
-  "name": "秘密フォルダ - つくる手帖",
-  "short_name": "秘密フォルダ",
-  "description": "パスワードで守る暗号化フォルダ。すべて端末内で完結します。",
-  "lang": "ja",
+  "name": "秘密フォルダⅡ",
+  "short_name": "ひみつⅡ",
+  "description": "大容量ファイル対応・FaceID開錠の暗号化フォルダ",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#f7f3ea",
+  "background_color": "#f7f4ea",
   "theme_color": "#2c5077",
   "icons": [
-    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }
